@@ -50,11 +50,11 @@
             </div>
             <div class="form-group">
               <label>邮箱</label>
-              <input class="form-control" type="email" placeholder="请输入邮箱" name="email">
+              <input class="form-control" type="email" placeholder="请输入邮箱" name="email" id="email">
             </div>
             <div class="form-group">
               <label>昵称</label>
-              <input class="form-control" type="text" placeholder="请输入昵称" name="nickName">
+              <input class="form-control" type="text" placeholder="请输入昵称" name="nickName" id="nickName">
             </div>
             <div class="form-group">
               <label>密码</label>
@@ -62,22 +62,23 @@
             </div>
             <div class="form-group">
               <div class="radio-inline">
-                <label><input type="radio" name="status" value="0">未激活</label>
+                <label><input type="radio" name="status" value="0" id="wjh">未激活</label>
               </div>
               <div class="radio-inline">
-                <label><input type="radio" checked name="status" value="1">激活</label>
+                <label><input type="radio" checked name="status" value="1" id="jh">激活</label>
               </div>
             </div>
             <div class="form-group">
               <div class="radio-inline">
-                <label><input type="radio" checked name="role" value="admin">超级管理员</label>
+                <label><input type="radio" checked name="role" value="admin" id="admin">超级管理员</label>
               </div>
               <div class="radio-inline">
-                <label><input type="radio" name="role" value="normal">普通用户</label>
+                <label><input type="radio" name="role" value="normal" id="normal">普通用户</label>
               </div>
             </div>
             <div class="form-group">
               <button class="btn btn-primary" id="addUser" type="button">添加</button>
+              <button class="btn btn-primary" type="button" id="editUser" style="display: none">修改</button>
             </div>
           </form>
         </div>
@@ -192,8 +193,8 @@
         <td>{{$value.nickName}}</td>
         <td>{{$value.status == 1 ? '激活' : '未激活'}}</td>
         <td>{{$value.role == 'admin' ? '超级管理员' : '普通用户'}}</td>
-        <td class="text-center">
-          <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
+        <td class="text-center" data-id="{{$value._id}}">
+          <a href="javascript:;" class="btn btn-default btn-xs edit">编辑</a>
           <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
         </td>
       </tr>
@@ -246,6 +247,72 @@
           $('#prev').attr('src', res[0].avatar);
         }
       })
+    });
+
+    //编辑功能
+    var id;
+    $('tbody').on('click', '.edit', function () {
+      id = $(this).parent().attr('data-id');
+      $('form > h2').text('修改用户');
+
+      var trObj = $(this).parents('tr');
+      //console.log(trObj);
+      $('#email').val(trObj.children().eq(2).text());
+      $('#nickName').val(trObj.children().eq(3).text());
+      var status = trObj.children().eq(4).text();
+      var role = trObj.children().eq(5).text();
+      var imgSrc = trObj.children().eq(1).find('img').attr('src');
+
+      if (status == '激活') {
+        $('#jh').prop('checked', true);
+      } else {
+        $('#wjh').prop('checked', true);
+      }
+
+      if (role == '超级管理员') {
+        $('#admin').prop('checked', true);
+      } else {
+        $('#normal').prop('checked', true);
+      }
+
+      if (imgSrc) {
+        $('#prev').attr("src", imgSrc);
+        $('#img').val(imgSrc);
+      } else {
+        $('#prev').attr("src", "../assets/img/default.png");
+        $('#img').val("");
+      }
+      $('#addUser').hide();
+      $('#editUser').show();
+    });
+
+    //给修改按钮添加点击事件
+    $('#editUser').on('click', function () {
+      var formData = $('form').serialize();
+      $.ajax({
+        type: 'put',
+        url: '/users/' + id,
+        data: formData,
+        success: function (res) {
+          // 通过res对象里面的_id属性的值去数组中 userArr这个数组将对应的元素找出来 
+          // 如果数组里面的元素的_id的值刚好等于了res._id 
+          var index = userArr.findIndex(item => item._id == res._id);
+          // 将res这个对象赋值给了userArr这个数组里面的指定的元素
+          userArr[index] = res;
+          render(userArr);
+          $('#addUser').show();
+          $('#editUser').hide();
+          $('form > h2').text('添加新用户');
+          $('#img').val("");
+          $('#prev').attr('src', "../assets/img/default.png");
+          $('#email').val("");
+          $('#nickName').val("");
+          $('#admin').prop('checked', false);
+          $('#normal').prop('checked', true);
+          $('#jh').prop('checked', false);
+          $('#wjh').prop('checked', true);
+        }
+      });
     });
 
     //定义一个render方法渲染模块
